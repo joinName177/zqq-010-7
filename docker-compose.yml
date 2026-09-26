@@ -1,0 +1,6 @@
+services:
+  cyc-012:
+    build: .
+    ports:
+      - "8012:80"
+    restart: unless-stopped

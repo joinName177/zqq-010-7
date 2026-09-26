@@ -1,0 +1,573 @@
+:root {
+  --bg-sand: #181513;
+  --panel-bg: #231f1d;
+  --panel-card: #2d2825;
+  --earth-accent: #d4a373;
+  --clay-red: #e76f51;
+  --ochre: #f4a261;
+  --moss-jade: #2a9d8f;
+  --text-main: #f4f1de;
+  --text-muted: #a89f91;
+  --border-color: #3f3935;
+  --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-sand);
+  color: var(--text-main);
+  font-family: var(--font-serif);
+  min-height: 100vh;
+  line-height: 1.6;
+  background-image: radial-gradient(#302722 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.archaeo-app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+}
+
+/* Header */
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 28px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  font-size: 28px;
+  background: var(--panel-card);
+  border: 1px solid var(--earth-accent);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.brand h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.brand p {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.header-status {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(212, 163, 115, 0.1);
+  color: var(--earth-accent);
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 163, 115, 0.3);
+}
+
+/* Control Hub */
+.control-hub {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.preset-sites {
+  margin-bottom: 20px;
+}
+
+.preset-title {
+  font-size: 14px;
+  color: var(--earth-accent);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preset-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.btn-preset {
+  background: var(--panel-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.btn-preset:hover {
+  border-color: var(--earth-accent);
+  background: #39322e;
+  transform: translateY(-1px);
+}
+
+.btn-preset.active {
+  border-color: var(--clay-red);
+  background: rgba(231, 111, 81, 0.15);
+  box-shadow: 0 0 10px rgba(231, 111, 81, 0.2);
+}
+
+.upload-section {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.drop-area {
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s;
+}
+
+.drop-area:hover {
+  border-color: var(--earth-accent);
+}
+
+.file-input {
+  display: none;
+}
+
+.btn-report {
+  background: linear-gradient(135deg, var(--clay-red), var(--ochre));
+  color: #fff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(231, 111, 81, 0.3);
+  transition: opacity 0.2s;
+}
+
+.btn-report:hover {
+  opacity: 0.9;
+}
+
+/* Layout Grid */
+.strata-layout {
+  display: grid;
+  grid-template-columns: 460px 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 960px) {
+  .strata-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Geological Core Column */
+.core-column-wrap {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.column-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.column-title h3 {
+  font-size: 16px;
+  color: var(--earth-accent);
+}
+
+.depth-indicator {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.strata-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.strata-card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--panel-card);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.strata-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  background-color: var(--layer-color, var(--earth-accent));
+}
+
+.strata-card:hover {
+  transform: translateX(4px);
+  border-color: var(--earth-accent);
+}
+
+.strata-card.selected {
+  border-color: var(--clay-red);
+  box-shadow: 0 0 15px rgba(231, 111, 81, 0.25);
+  background: #362e29;
+}
+
+.strata-card-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.layer-tag {
+  font-weight: 700;
+  color: var(--earth-accent);
+}
+
+.layer-depth {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.layer-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.layer-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.temp-badge {
+  color: var(--clay-red);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+/* Detail Inspection Panel */
+.detail-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detail-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+
+.detail-epoch {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--earth-accent);
+  margin-bottom: 6px;
+}
+
+.detail-lithology {
+  font-size: 13px;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border-left: 3px solid var(--earth-accent);
+}
+
+/* Temperature Gauge */
+.temp-gauge-box {
+  background: var(--panel-card);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.gauge-title {
+  font-size: 13px;
+  color: var(--earth-accent);
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.gauge-bar-bg {
+  height: 12px;
+  background: #191614;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.gauge-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2a9d8f, #e9c46a, #e76f51);
+  transition: width 0.4s ease;
+}
+
+/* Sediment Breakdown */
+.sediment-box {
+  background: var(--panel-card);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.sediment-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sediment-item {
+  display: grid;
+  grid-template-columns: 80px 1fr 45px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.sediment-progress {
+  height: 8px;
+  background: #191614;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sediment-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+/* Topics */
+.topics-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.topic-chip {
+  background: rgba(212, 163, 115, 0.15);
+  border: 1px solid rgba(212, 163, 115, 0.3);
+  color: var(--earth-accent);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* Fossils list */
+.fossils-section h4 {
+  font-size: 14px;
+  color: var(--earth-accent);
+  margin-bottom: 12px;
+}
+
+.fossil-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fossil-item {
+  background: var(--panel-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.fossil-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.fossil-badge {
+  background: rgba(231, 111, 81, 0.2);
+  color: var(--clay-red);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.fossil-quote {
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #fff;
+  border-left: 2px solid var(--ochre);
+  padding-left: 10px;
+  margin: 8px 0;
+}
+
+.fossil-notes {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Modal: Archaeology Report */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: #25201d;
+  border: 2px solid var(--earth-accent);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 840px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 36px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  position: relative;
+}
+
+.report-seal {
+  position: absolute;
+  top: 30px;
+  right: 36px;
+  border: 2px solid var(--clay-red);
+  color: var(--clay-red);
+  padding: 6px 12px;
+  transform: rotate(-10deg);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.report-header h2 {
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.report-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.report-stat-card {
+  background: var(--panel-card);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.report-stat-card .val {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--earth-accent);
+  font-family: var(--font-mono);
+}
+
+.report-stat-card .lbl {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.report-section {
+  margin-bottom: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 3px solid var(--clay-red);
+}
+
+.report-section h4 {
+  font-size: 14px;
+  color: var(--ochre);
+  margin-bottom: 8px;
+}
+
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-secondary {
+  background: var(--panel-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: var(--earth-accent);
+}
