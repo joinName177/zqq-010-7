@@ -4,7 +4,8 @@ import {
   ArchaeologyReport,
   FossilArtifact,
   EmotionalSediment,
-  RelicCategory
+  RelicCategory,
+  AnalysisDataQuality
 } from './models';
 
 const DICT = {
@@ -114,10 +115,32 @@ function findRelic(messages: ChatMessage[], depthLevel: number): FossilArtifact[
   return artifacts;
 }
 
-export function analyzeChatStrata(messages: ChatMessage[], siteName = '未知时空坐标对话遗址'): ArchaeologyReport {
+/** 内置历史遗址标本的默认质量标识：无解析损耗，分析结论完整可信 */
+export function presetDataQuality(messageCount: number): AnalysisDataQuality {
+  return {
+    source: 'preset',
+    status: 'complete',
+    formatDetected: '内置标本',
+    totalLines: messageCount,
+    validMessageCount: messageCount,
+    salvagedCount: 0,
+    droppedLineCount: 0,
+    warningCount: 0,
+    errorCount: 0,
+    truncatedIssues: false,
+    issues: []
+  };
+}
+
+export function analyzeChatStrata(
+  messages: ChatMessage[],
+  siteName = '未知时空坐标对话遗址',
+  dataQuality?: AnalysisDataQuality
+): ArchaeologyReport {
   if (messages.length === 0) {
     throw new Error('聊天记录为空，无法进行地层切片勘探');
   }
+  const quality = dataQuality ?? presetDataQuality(messages.length);
 
   // Sort chronological (oldest first)
   const sorted = [...messages].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
@@ -186,6 +209,14 @@ export function analyzeChatStrata(messages: ChatMessage[], siteName = '未知时
   // Carbon-14 activity (modern activity decays with time distance)
   const carbon14Activity = Math.round(Math.max(12, Math.min(99, (strata[0].temperatureCelsius * 0.7 + (100 - totalDays % 50) * 0.3))));
 
+  const salvageRate = sorted.length > 0 ? quality.salvagedCount / sorted.length : 0;
+  const qualityNote =
+    quality.source === 'preset'
+      ? ''
+      : quality.status === 'degraded'
+        ? `本次发掘含 ${quality.salvagedCount} 条抢救性标本（占 ${Math.round(salvageRate * 100)}%）、${quality.droppedLineCount} 行无法修复的残片，相关地层温度与话题结论仅供参考。`
+        : '';
+
   return {
     siteCode: `RELIC-ARCH-${Math.floor(100000 + Math.random() * 900000)}`,
     siteName,
@@ -197,7 +228,13 @@ export function analyzeChatStrata(messages: ChatMessage[], siteName = '未知时
     notableRelics: allRelics,
     peakEpoch,
     coolingEpoch,
-    archaeologicalSummary: `在跨度 ${totalDays} 天的 ${sorted.length} 条对话地质标本中，发现了清晰的5层沉积构造。深层基岩呈现强烈的初生结晶热能，中层胶结致密并出土高质量情感遗存，浅层表土存在一定程度的风化沉积。`,
-    curatorAssessment: carbon14Activity > 60 ? '高活力地质遗址 · 存在持续地热交换与同频共生迹象' : '渐次固化休眠地层 · 标本完整度极高，适合永久珍藏馆陈列'
+    archaeologicalSummary:
+      `在跨度 ${totalDays} 天的 ${sorted.length} 条对话地质标本中，发现了清晰的5层沉积构造。深层基岩呈现强烈的初生结晶热能，中层胶结致密并出土高质量情感遗存，浅层表土存在一定程度的风化沉积。` +
+      qualityNote,
+    curatorAssessment:
+      carbon14Activity > 60
+        ? '高活力地质遗址 · 存在持续地热交换与同频共生迹象'
+        : '渐次固化休眠地层 · 标本完整度极高，适合永久珍藏馆陈列',
+    dataQuality: quality
   };
 }

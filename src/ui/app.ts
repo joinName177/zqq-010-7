@@ -1,10 +1,53 @@
-import { ArchaeologyReport, StrataLayer } from '../core/models';
+import { ArchaeologyReport, StrataLayer, DataQualityIssue } from '../core/models';
 import { SampleSite } from '../adapters/sample-data.adapter';
+
+const ISSUE_KIND_LABEL: Record<DataQualityIssue['kind'], string> = {
+  'invalid-date': '时间戳损坏',
+  'malformed-json': 'JSON 损坏',
+  'missing-content': '空消息丢弃',
+  'unknown-format': '未知格式',
+  'encoding-suspect': '编码疑似损坏'
+};
 
 export interface UIEventHandlers {
   onSelectPreset: (siteId: string) => void;
   onUploadFile: (file: File) => void;
   onOpenReport: () => void;
+}
+
+/** 报告级数据可靠性横幅：让使用者一眼知道结论基于何种质量的标本 */
+function renderQualityBanner(report: ArchaeologyReport): string {
+  const q = report.dataQuality;
+  if (q.source === 'preset') {
+    return `<div class="quality-banner qb-preset">🏺 <span>内置历史遗址标本 · 格式完整，分析结论为标准鉴定结果</span></div>`;
+  }
+  if (q.status === 'complete') {
+    return `<div class="quality-banner qb-complete">✅ <span>解析完整：识别为「${q.formatDetected ?? '未知'}」格式，${q.validMessageCount} 条消息全部成功入藏，无损耗</span></div>`;
+  }
+  if (q.status === 'degraded') {
+    return `
+      <div class="quality-banner qb-degraded">
+        <span>⚠️ 标本降级鉴定：识别为「${q.formatDetected ?? '纯文本兜底'}」格式 · 共 ${q.totalLines} 行，有效保留 ${q.validMessageCount} 条（含抢救 ${q.salvagedCount} 条），丢弃 ${q.droppedLineCount} 行 · 错误 ${q.errorCount} / 警告 ${q.warningCount}</span>
+        <details class="qb-details">
+          <summary>查看错误摘要（${q.issues.length}${q.truncatedIssues ? '+' : ''} 条）</summary>
+          <ul class="qb-issue-list">
+            ${q.issues
+              .map(
+                i => `
+              <li class="qb-issue qb-${i.severity}">
+                <span class="qb-line">第${i.lineNumber || '文件'}行</span>
+                <span class="qb-tag">${ISSUE_KIND_LABEL[i.kind]}</span>
+                <span class="qb-msg">${i.message}</span>
+                ${i.excerpt ? `<code class="qb-excerpt">${i.excerpt}</code>` : ''}
+              </li>`
+              )
+              .join('')}
+            ${q.truncatedIssues ? '<li class="qb-trunc">问题行过多，仅展示前 50 条</li>' : ''}
+          </ul>
+        </details>
+      </div>`;
+  }
+  return `<div class="quality-banner qb-failed">❌ <span>未能解析出任何有效消息</span></div>`;
 }
 
 export function renderApp(
@@ -68,6 +111,8 @@ export function renderApp(
           </button>
         </div>
       </section>
+
+      ${renderQualityBanner(report)}
 
       <main class="strata-layout">
         <!-- Left: Stratigraphic Column -->
@@ -236,6 +281,52 @@ export function renderApp(
               <h4>馆藏专家终审评定：</h4>
               <p>“${escapeHtml(report.curatorAssessment)}”</p>
             </div>
+
+            ${
+              report.dataQuality.source === 'upload'
+                ? `
+            <div class="report-section report-quality ${
+              report.dataQuality.status === 'degraded' ? 'rq-degraded' : 'rq-complete'
+            }">
+              <h4>🔖 标本完整性鉴定（分析结果标识）：</h4>
+              <p>
+                数据来源：用户导入文件 · 识别格式：<strong>${escapeHtml(report.dataQuality.formatDetected ?? '纯文本兜底')}</strong>
+                · 鉴定结论：<strong>${report.dataQuality.status === 'complete' ? '完整标本' : '降级标本'}</strong>
+              </p>
+              <p>
+                扫描 ${report.dataQuality.totalLines} 行 → 有效消息 ${report.dataQuality.validMessageCount} 条
+                （其中抢救恢复 ${report.dataQuality.salvagedCount} 条）· 无法修复残片 ${report.dataQuality.droppedLineCount} 行
+                · 错误 ${report.dataQuality.errorCount} 项 / 警告 ${report.dataQuality.warningCount} 项
+              </p>
+              ${
+                report.dataQuality.issues.length > 0
+                  ? `
+                <details>
+                  <summary>问题行清单（${report.dataQuality.issues.length}${report.dataQuality.truncatedIssues ? '+' : ''}）</summary>
+                  <ul class="qb-issue-list report-issue-list">
+                    ${report.dataQuality.issues
+                      .map(
+                        i => `
+                      <li class="qb-issue qb-${i.severity}">
+                        <span class="qb-line">第${i.lineNumber || '文件'}行</span>
+                        <span class="qb-tag">${ISSUE_KIND_LABEL[i.kind]}</span>
+                        <span class="qb-msg">${escapeHtml(i.message)}</span>
+                        ${i.excerpt ? `<code class="qb-excerpt">${escapeHtml(i.excerpt)}</code>` : ''}
+                      </li>`
+                      )
+                      .join('')}
+                    ${report.dataQuality.truncatedIssues ? '<li class="qb-trunc">问题行过多，仅展示前 50 条</li>' : ''}
+                  </ul>
+                </details>`
+                  : '<p>全部行均通过格式校验，本报告结论建立在完整无损的原始记录之上。</p>'
+              }
+            </div>`
+                : `
+            <div class="report-section report-quality rq-preset">
+              <h4>🔖 标本完整性鉴定（分析结果标识）：</h4>
+              <p>数据来源：内置历史遗址标本库 · ${report.totalMessages} 条标本均为结构化完整数据，鉴定结论为标准鉴定结果。</p>
+            </div>`
+            }
 
             <div class="report-actions">
               <button class="btn-secondary" id="btnCloseReport">关闭报告</button>
