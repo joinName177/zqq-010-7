@@ -1,4 +1,5 @@
 import { ArchaeologyReport, StrataLayer } from '../core/models';
+import { issueLabel } from '../core/parse-quality';
 import { SampleSite } from '../adapters/sample-data.adapter';
 
 export interface UIEventHandlers {
@@ -22,6 +23,54 @@ export function renderApp(
 
   const escapeHtml = (str: string) =>
     str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+
+  // 数据质量横幅：仅在发生降级时出现，明确区分“可信结论”与“抢救性结论”
+  const q = report.analysisQuality;
+  const qualityBanner = q && q.flag !== 'high-confidence'
+    ? `
+      <section class="quality-banner quality-${q.flag}">
+        <div class="quality-head">
+          <span class="quality-icon">${q.flag === 'salvage-only' ? '⚠️' : '🛠️'}</span>
+          <div class="quality-text">
+            <strong>${escapeHtml(q.label)}</strong>
+            <p>${escapeHtml(q.notice)}</p>
+          </div>
+          <details class="quality-details">
+            <summary>查看错误摘要（${q.summary.issueCount} 项）</summary>
+            <div class="quality-table-wrap">
+              <table class="quality-table">
+                <thead>
+                  <tr><th>行号</th><th>类型</th><th>级别</th><th>说明</th><th>原始片段</th></tr>
+                </thead>
+                <tbody>
+                  ${q.issues
+                    .map(
+                      iss => `
+                    <tr>
+                      <td>${iss.line === 0 ? '全局' : iss.line}</td>
+                      <td>${escapeHtml(issueLabel(iss.code))}</td>
+                      <td><span class="sev sev-${iss.severity}">${iss.severity === 'error' ? '错误' : '警告'}</span></td>
+                      <td>${escapeHtml(iss.message)}</td>
+                      <td class="raw-preview">${iss.rawPreview ? escapeHtml(iss.rawPreview) : '—'}</td>
+                    </tr>`
+                    )
+                    .join('')}
+                </tbody>
+              </table>
+              ${q.summary.issueCount > q.issues.length ? `<p class="quality-more">仅展示前 ${q.issues.length} 条明细，总计 ${q.summary.issueCount} 项（计数完整）。</p>` : ''}
+            </div>
+          </details>
+        </div>
+        <div class="quality-chips">
+          <span class="q-chip">识别格式：${q.summary.detectedFormats.map(escapeHtml).join(' / ')}</span>
+          <span class="q-chip">结构化 ${q.summary.structuredMessages}</span>
+          <span class="q-chip q-chip-recovered">降级恢复 ${q.summary.recoveredMessages}</span>
+          <span class="q-chip q-chip-salvaged">抢救语料 ${q.summary.salvagedMessages}</span>
+          <span class="q-chip">丢弃 ${q.summary.droppedLines}</span>
+          <span class="q-chip">保留率 ${q.summary.retentionRate}%</span>
+        </div>
+      </section>`
+    : '';
 
   container.innerHTML = `
     <div class="archaeo-app">
@@ -69,6 +118,8 @@ export function renderApp(
         </div>
       </section>
 
+      ${qualityBanner}
+
       <main class="strata-layout">
         <!-- Left: Stratigraphic Column -->
         <section class="core-column-wrap">
@@ -92,6 +143,11 @@ export function renderApp(
                   <span>${layer.timeRange.start} ~ ${layer.timeRange.end}</span>
                   <span class="temp-badge">${layer.temperatureCelsius}°C</span>
                 </div>
+                ${
+                  layer.recoveredMessageCount > 0
+                    ? `<div class="layer-recovered" title="该层含降级恢复的消息">🛠️ 恢复 ${layer.recoveredMessageCount}${layer.salvagedMessageCount > 0 ? ` · 抢救 ${layer.salvagedMessageCount}` : ''}</div>`
+                    : ''
+                }
               </div>
             `
               )
@@ -116,6 +172,11 @@ export function renderApp(
               <span>关系地温指数：${currentLayer.temperatureCelsius}°C</span>
               <span>记录密度：${currentLayer.messageCount} 条对话遗存</span>
             </div>
+            ${
+              currentLayer.recoveredMessageCount > 0
+                ? `<div class="detail-provenance">🛠️ 本层 ${currentLayer.recoveredMessageCount}/${currentLayer.messageCount} 条来自降级恢复${currentLayer.salvagedMessageCount > 0 ? `（其中 ${currentLayer.salvagedMessageCount} 条为未知格式抢救语料）` : ''}，温度与话题结论已据此标记。</div>`
+                : ''
+            }
             <div class="gauge-bar-bg">
               <div class="gauge-bar-fill" style="width: ${currentLayer.temperatureCelsius}%"></div>
             </div>
@@ -236,6 +297,27 @@ export function renderApp(
               <h4>馆藏专家终审评定：</h4>
               <p>“${escapeHtml(report.curatorAssessment)}”</p>
             </div>
+
+            ${
+              q && q.flag !== 'high-confidence'
+                ? `
+            <div class="report-section report-quality quality-${q.flag}">
+              <h4>标本数据质量与结论标识：</h4>
+              <p><strong>${escapeHtml(q.label)}</strong></p>
+              <p>${escapeHtml(q.notice)}</p>
+              <table class="quality-table quality-table-compact">
+                <tbody>
+                  <tr><td>识别格式</td><td>${q.summary.detectedFormats.map(escapeHtml).join(' / ')}</td></tr>
+                  <tr><td>结构化消息</td><td>${q.summary.structuredMessages} 条</td></tr>
+                  <tr><td>降级恢复保留</td><td>${q.summary.recoveredMessages} 条（其中抢救语料 ${q.summary.salvagedMessages} 条）</td></tr>
+                  <tr><td>无法恢复已丢弃</td><td>${q.summary.droppedLines} 行</td></tr>
+                  <tr><td>错误 / 警告</td><td>${q.summary.errorCount} / ${q.summary.warningCount}</td></tr>
+                  <tr><td>有效消息保留率</td><td>${q.summary.retentionRate}%</td></tr>
+                </tbody>
+              </table>
+            </div>`
+                : ''
+            }
 
             <div class="report-actions">
               <button class="btn-secondary" id="btnCloseReport">关闭报告</button>
